@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Optimization Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle { 
+            color: #666; 
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .country-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 10px;
+            width: fit-content;
+        }
+        .country-btn {
+            padding: 12px 30px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .country-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .section { display: none; }
+        .section.active { display: block; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: normal;
+        }
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .result-item {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .result-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .result-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .tip-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .tip-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+        .tip-header {
+            padding: 20px;
+            cursor: pointer;
+            background: white;
+        }
+        .tip-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .tip-impact {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .impact-high {
+            background: #fee;
+            color: #c00;
+        }
+        .impact-medium {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        .tip-description {
+            color: #666;
+            margin-top: 8px;
+        }
+        .tip-details {
+            padding: 20px;
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            color: #555;
+            line-height: 1.6;
+        }
+        .hidden { display: none; }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1565c0;
+        }
+        .alert-success {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        @media (max-width: 768px) {
+            .form-grid, .result-grid {
+                grid-template-columns: 1fr;
+            }
+            h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Tax Optimization Assistant</h1>
+        <p class="subtitle">Maximize your tax savings all year long</p>
+        
+        <div class="country-selector">
+            <button class="country-btn active" onclick="setCountry('AU')">🇦🇺 Australia</button>
+            <button class="country-btn" onclick="setCountry('US')">🇺🇸 USA</button>
+            <button class="country-btn" onclick="setCountry('UK')">🇬🇧 UK</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('input')">📋 Your Info</button>
+            <button class="tab" onclick="showTab('estimate')">🧮 Tax Estimate</button>
+            <button class="tab" onclick="showTab('tips')">💡 Tips (<span id="tipCount">0</span>)</button>
+        </div>
+
+        <div id="inputSection" class="section active">
+            <div class="form-grid">
+                <div>
+                    <h3 style="margin-bottom: 20px;">Basic Information</h3>
+                    <div class="form-group">
+                        <label>Annual Income (<span id="currency1">$</span>)</label>
+                        <input type="number" id="income" placeholder="80000" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Filing Status</label>
+                        <select id="filingStatus" onchange="calculate()">
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="selfEmployed" onchange="calculate()">
+                            Self-employed
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasKids" onchange="toggleKids()">
+                            I have dependent children
+                        </label>
+                    </div>
+                    <div class="form-group hidden" id="numKidsGroup">
+                        <label>Number of children</label>
+                        <input type="number" id="numKids" placeholder="2" oninput="calculate()">
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="margin-bottom: 20px;" id="accountsTitle">Tax-Advantaged Accounts</h3>
+                    <div id="accountInputs"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="estimateSection" class="section">
+            <div class="result-box">
+                <h3 style="margin-bottom: 20px;">Tax Estimate Summary</h3>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="result-label">Estimated Tax</div>
+                        <div class="result-value" id="totalTax">$0</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Effective Rate</div>
+                        <div class="result-value" id="effectiveRate">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-grid">
+                <div class="result-item" style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                    <div class="result-label" style="color: #666;">Gross Income</div>
+                    <div class="result-value" style="color: #333; font-size: 24px;" id="grossIncome">$0</div>
+                </div>
+                <div class="result-item" style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                    <div class="result-label" style="color: #666;">Taxable Income</div>
+                    <div class="result-value" style="color: #333; font-size: 24px;" id="taxableIncome">$0</div>
+                </div>
+            </div>
+            <div class="alert alert-info" style="margin-top: 20px;">
+                <strong>Disclaimer:</strong> <span id="disclaimer">This is a simplified estimate for planning purposes only.</span>
+            </div>
+        </div>
+
+        <div id="tipsSection" class="section">
+            <div class="alert alert-success" id="tipsAlert">
+                <strong id="tipsFound">0 optimization opportunities found</strong>
+            </div>
+            <div id="tipsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentCountry = 'AU';
+        let expandedTips = {};
+
+        function setCountry(country) {
+            currentCountry = country;
+            document.querySelectorAll('.country-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updateCurrency();
+            updateAccountInputs();
+            calculate();
+        }
+
+        function updateCurrency() {
+            const symbol = currentCountry === 'UK' ? '£' : '$';
+            document.querySelectorAll('[id^="currency"]').forEach(el => el.textContent = symbol);
+        }
+
+        function updateAccountInputs() {
+            const container = document.getElementById('accountInputs');
+            if (currentCountry === 'AU') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Superannuation Contributions ($)</label>
+                        <input type="number" id="superContrib" placeholder="10000" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasPrivateHealth" onchange="calculate()">
+                            Private health insurance
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Charitable Donations ($)</label>
+                        <input type="number" id="charity" placeholder="1000" oninput="calculate()">
+                    </div>
+                `;
+            } else if (currentCountry === 'US') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Retirement Contributions ($)</label>
+                        <input type="number" id="retirement" placeholder="6500" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasHSA" onchange="calculate()">
+                            I have an HSA
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Charitable Donations ($)</label>
+                        <input type="number" id="charity" placeholder="2000" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Mortgage Interest ($)</label>
+                        <input type="number" id="mortgage" placeholder="8000" oninput="calculate()">
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Pension Contributions (£)</label>
+                        <input type="number" id="pension" placeholder="5000" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasISA" onchange="calculate()">
+                            I use an ISA
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Charitable Donations (£)</label>
+                        <input type="number" id="charity" placeholder="1000" oninput="calculate()">
+                    </div>
+                `;
+            }
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Section').classList.add('active');
+        }
+
+        function toggleKids() {
+            const group = document.getElementById('numKidsGroup');
+            group.classList.toggle('hidden', !document.getElementById('hasKids').checked);
+            calculate();
+        }
+
+        function getValue(id) {
+            const el = document.getElementById(id);
+            return el ? (el.type === 'checkbox' ? el.checked : parseFloat(el.value) || 0) : 0;
+        }
+
+        function calculate() {
+            const income = getValue('income');
+            const symbol = currentCountry === 'UK' ? '£' : '$';
+            
+            let tax = 0;
+            let taxableIncome = 0;
+
+            if (currentCountry === 'AU') {
+                const superContrib = getValue('superContrib');
+                taxableIncome = Math.max(0, income - superContrib);
+                
+                if (taxableIncome <= 18200) tax = 0;
+                else if (taxableIncome <= 45000) tax = (taxableIncome - 18200) * 0.16;
+                else if (taxableIncome <= 135000) tax = 4288 + (taxableIncome - 45000) * 0.30;
+                else if (taxableIncome <= 190000) tax = 31288 + (taxableIncome - 135000) * 0.37;
+                else tax = 51638 + (taxableIncome - 190000) * 0.45;
+                
+                if (taxableIncome > 24276) tax += taxableIncome * 0.02;
+                
+                if (!getValue('hasPrivateHealth') && income > 97000) {
+                    const surcharge = income > 151000 ? 0.015 : income > 113000 ? 0.0125 : 0.01;
+                    tax += income * surcharge;
+                }
+            } else if (currentCountry === 'US') {
+                const retirement = getValue('retirement');
+                const charity = getValue('charity');
+                const mortgage = getValue('mortgage');
+                const standardDed = getValue('filingStatus') === 'married' ? 29200 : 14600;
+                const deduction = Math.max(standardDed, charity + mortgage);
+                
+                taxableIncome = Math.max(0, income - retirement - deduction);
+                
+                if (taxableIncome <= 11600) tax = taxableIncome * 0.10;
+                else if (taxableIncome <= 47150) tax = 1160 + (taxableIncome - 11600) * 0.12;
+                else if (taxableIncome <= 100525) tax = 5426 + (taxableIncome - 47150) * 0.22;
+                else tax = 17168.50 + (taxableIncome - 100525) * 0.24;
+            } else {
+                const pension = getValue('pension');
+                const personalAllowance = income > 100000 ? Math.max(0, 12570 - (income - 100000) / 2) : 12570;
+                taxableIncome = Math.max(0, income - pension - personalAllowance);
+                
+                if (taxableIncome <= 37700) tax = taxableIncome * 0.20;
+                else if (taxableIncome <= 125140) tax = 37700 * 0.20 + (taxableIncome - 37700) * 0.40;
+                else tax = 37700 * 0.20 + 87440 * 0.40 + (taxableIncome - 125140) * 0.45;
+                
+                if (income > 12570) {
+                    const niUpper = 50270;
+                    if (income <= niUpper) tax += (income - 12570) * 0.08;
+                    else tax += (niUpper - 12570) * 0.08 + (income - niUpper) * 0.02;
+                }
+            }
+
+            const effectiveRate = income > 0 ? (tax / income * 100).toFixed(1) : 0;
+
+            document.getElementById('totalTax').textContent = symbol + Math.round(tax).toLocaleString();
+            document.getElementById('effectiveRate').textContent = effectiveRate + '%';
+            document.getElementById('grossIncome').textContent = symbol + income.toLocaleString();
+            document.getElementById('taxableIncome').textContent = symbol + Math.round(taxableIncome).toLocaleString();
+
+            generateTips();
+        }
+
+        function generateTips() {
+            const tips = [];
+            const income = getValue('income');
+            
+            if (currentCountry === 'AU') {
+                const superContrib = getValue('superContrib');
+                const superRoom = 30000 - superContrib;
+                if (income > 40000 && superRoom > 0) {
+                    tips.push({
+                        title: 'Maximize Super Contributions',
+                        impact: 'High',
+                        description: `Contribute up to $${superRoom.toLocaleString()} more to super`,
+                        details: 'Super contributions are taxed at only 15% instead of your marginal rate.'
+                    });
+                }
+                if (!getValue('hasPrivateHealth') && income > 97000) {
+                    tips.push({
+                        title: 'Consider Private Health Insurance',
+                        impact: 'High',
+                        description: 'Avoid Medicare Levy Surcharge',
+                        details: 'You may be paying 1-1.5% surcharge. Private health insurance could cost less.'
+                    });
+                }
+            } else if (currentCountry === 'US') {
+                const retirement = getValue('retirement');
+                const retirementRoom = 23500 - retirement;
+                if (income > 50000 && retirementRoom > 0) {
+                    tips.push({
+                        title: 'Maximize Retirement Contributions',
+                        impact: 'High',
+                        description: `Contribute up to $${retirementRoom.toLocaleString()} more`,
+                        details: '401k and IRA contributions reduce your taxable income.'
+                    });
+                }
+                if (!getValue('hasHSA') && income > 40000) {
+                    tips.push({
+                        title: 'Consider an HSA',
+                        impact: 'High',
+                        description: 'Triple tax benefits',
+                        details: 'HSAs offer tax-deductible contributions, tax-free growth, and tax-free withdrawals for medical expenses.'
+                    });
+                }
+            } else {
+                const pension = getValue('pension');
+                const pensionRoom = 60000 - pension;
+                if (income > 30000 && pensionRoom > 0) {
+                    tips.push({
+                        title: 'Maximize Pension Contributions',
+                        impact: 'High',
+                        description: `Contribute up to £${pensionRoom.toLocaleString()} more`,
+                        details: 'Pension contributions significantly reduce your taxable income.'
+                    });
+                }
+                if (!getValue('hasISA') && income > 20000) {
+                    tips.push({
+                        title: 'Use Your ISA Allowance',
+                        impact: 'High',
+                        description: 'Save up to £20,000 tax-free',
+                        details: 'ISA gains are completely tax-free forever.'
+                    });
+                }
+            }
+
+            if (getValue('selfEmployed')) {
+                tips.push({
+                    title: 'Claim All Business Expenses',
+                    impact: 'High',
+                    description: 'Maximize deductions',
+                    details: 'Home office, equipment, software, and professional development are all deductible.'
+                });
+            }
+
+            document.getElementById('tipCount').textContent = tips.length;
+            document.getElementById('tipsFound').textContent = `${tips.length} optimization opportunities found`;
+
+            const tipsList = document.getElementById('tipsList');
+            if (tips.length === 0) {
+                tipsList.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Enter your information to see personalized tips</p>';
+            } else {
+                tipsList.innerHTML = tips.map((tip, i) => `
+                    <div class="tip-card">
+                        <div class="tip-header" onclick="toggleTip(${i})">
+                            <div class="tip-title">
+                                ${tip.title}
+                                <span class="tip-impact impact-${tip.impact.toLowerCase()}">${tip.impact}</span>
+                            </div>
+                            <div class="tip-description">${tip.description}</div>
+                        </div>
+                        <div class="tip-details hidden" id="tip-${i}">
+                            ${tip.details}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleTip(index) {
+            const el = document.getElementById(`tip-${index}`);
+            el.classList.toggle('hidden');
+        }
+
+        updateCurrency();
+        updateAccountInputs();
+        calculate();
+    </script>
+</body>
+</html>
